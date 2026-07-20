@@ -65,12 +65,12 @@ main { max-width: 720px; margin: 0 auto; padding: 14px; }
 .editor { background: #1e2430; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
 .editor-top { background: #141922; color: #cbd5e0; padding: 9px 14px; font-size: .8rem; display: flex; align-items: center; gap: 8px; }
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-.editor-scroll { overflow-x: auto; padding: 8px 0; }
-.srcline { display: flex; min-width: max-content; cursor: pointer; }
+.editor-scroll { padding: 8px 0; }
+.srcline { display: flex; cursor: pointer; }
 .srcline:hover { background: #2a3242; }
 .srcline.active { background: #2d3a52; }
-.srcline .ln { width: 40px; min-width: 40px; text-align: right; padding-right: 10px; color: #566073; font-family: Consolas, monospace; font-size: .78rem; line-height: 1.9; user-select: none; }
-.srcline .lc { font-family: Consolas, Menlo, monospace; font-size: .8rem; line-height: 1.9; color: #d8dee9; white-space: pre; padding-right: 16px; }
+.srcline .ln { width: 34px; min-width: 34px; text-align: right; padding-right: 8px; color: #566073; font-family: Consolas, monospace; font-size: .74rem; line-height: 1.85; user-select: none; }
+.srcline .lc { font-family: Consolas, Menlo, monospace; font-size: .78rem; line-height: 1.85; color: #d8dee9; white-space: pre-wrap; word-break: break-all; overflow-wrap: anywhere; padding-right: 10px; flex: 1; min-width: 0; }
 .srcline.has-desc .lc { color: #8ecbff; }
 .srcline.plain { cursor: default; }
 .expl { display: none; background: #f0f6ff; border-left: 4px solid #2563eb; margin: 0; padding: 11px 14px; font-size: .86rem; line-height: 1.7; color: #2d3748; }
@@ -497,7 +497,7 @@ function showScript(si) {
         }).join('')}
       </div>
     </div>
-    <p class="code-tip">💡 하늘색 줄 = 해설 있음 · 누르면 바로 아래에 해설이 펼쳐집니다 · 좌우 스크롤 가능</p>`;
+    <p class="code-tip">💡 하늘색 줄 = 해설 있음 · 누르면 바로 아래에 해설이 펼쳐집니다 · 긴 줄은 자동 줄바꿈됩니다</p>`;
   window.scrollTo(0, 0);
 }
 
