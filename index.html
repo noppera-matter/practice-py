@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>마음 보호 10분 매뉴얼</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.22.20/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<style>
+    :root {
+        --primary: #1e3a8a;
+        --accent: #f59e0b;
+        --text: #0f172a;
+    }
+
+    * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+        font-family: -apple-system, 'Nanum Gothic', sans-serif;
+    }
+
+    body {
+        margin: 0;
+        background: linear-gradient(135deg, #e0e7ff 0%, #fef3c7 100%);
+        height: 100dvh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        color: var(--text);
+    }
+
+    #root {
+        width: 100%;
+        max-width: 450px;
+        height: 100%;
+        padding: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .app-frame {
+        width: 100%;
+        height: 95%;
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(10px);
+        border-radius: 40px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        border: 2px solid white;
+        position: relative;
+    }
+
+    .screen {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow: hidden;
+    }
+
+    .center-screen {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        text-align: center;
+    }
+
+    .scrollable {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .timer-header {
+        padding: 30px 25px 15px;
+        background: #1e293b;
+        color: white;
+        border-radius: 0 0 30px 30px;
+    }
+
+    .timer-val {
+        font-size: 36px;
+        font-weight: 900;
+        color: #22d3ee;
+        font-family: monospace;
+    }
+
+    .prog-bg {
+        height: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        margin-top: 15px;
+        overflow: hidden;
+    }
+
+    .prog-fill {
+        height: 100%;
+        background: var(--accent);
+        transition: width 1s linear;
+    }
+
+    .mission-card {
+        background: white;
+        margin: 20px;
+        border-radius: 30px;
+        padding: 35px 20px;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 320px;
+    }
+
+    .success-card {
+        background: white;
+        width: 100%;
+        border-radius: 30px;
+        padding: 30px 20px;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        margin-top: 25px;
+    }
+
+    .btn-action {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 20px;
+        border-radius: 20px;
+        font-size: 18px;
+        font-weight: 900;
+        margin: 10px 20px 20px;
+        cursor: pointer;
+        transition: 0.2s;
+        box-shadow: 0 8px 15px rgba(92, 107, 192, 0.2);
+        width: calc(100% - 40px);
+    }
+
+    .btn-action:active { transform: scale(0.96); }
+
+    .game-board {
+        background: #bbada0;
+        width: 280px;
+        height: 280px;
+        border-radius: 12px;
+        padding: 10px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin: 20px auto;
+        touch-action: none;
+    }
+
+    .tile {
+        width: 58px;
+        height: 58px;
+        background: rgba(238, 228, 218, 0.35);
+        border-radius: 6px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: 900;
+        font-size: 18px;
+        color: #776e65;
+    }
+
+    .tile-2 { background: #eee4da; }
+    .tile-4 { background: #ede0c8; }
+    .tile-8 { background: #f2b179; color: white; }
+
+    .sudoku-board {
+        background: #bbada0;
+        width: 300px;
+        height: 300px;
+        border-radius: 10px;
+        padding: 5px;
+        display: grid;
+        grid-template-columns: repeat(9, 1fr);
+        gap: 2px;
+        margin: 20px auto;
+    }
+
+    .sudoku-cell {
+        background: #eee4da;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+        font-size: 16px;
+        color: #776e65;
+        cursor: pointer;
+    }
+
+    .sudoku-cell.fixed { background: #cdc1b4; }
+    .sudoku-cell.selected { background: #f2b179; color: white; }
+
+    .sudoku-numpad {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 5px;
+        width: 300px;
+        margin: 0 auto;
+    }
+
+    .sudoku-num-btn {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .sudoku-num-btn:active { transform: scale(0.95); }
+
+    /* ── 코드 공부 스타일 ── */
+    .quiz-header {
+        padding: 18px 20px 14px;
+        background: #0f172a;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .quiz-prog-bar {
+        height: 6px;
+        background: rgba(255,255,255,0.15);
+        border-radius: 6px;
+        margin-top: 10px;
+        overflow: hidden;
+    }
+
+    .quiz-prog-fill {
+        height: 100%;
+        background: #22d3ee;
+        transition: width 0.3s;
+    }
+
+    .code-block {
+        background: #1e293b;
+        color: #e2e8f0;
+        border-radius: 14px;
+        padding: 16px;
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+        line-height: 1.7;
+        white-space: pre-wrap;
+        word-break: break-all;
+        text-align: left;
+        margin: 4px 0 10px;
+    }
+
+    .quiz-opt {
+        width: 100%;
+        text-align: left;
+        padding: 14px 16px;
+        border-radius: 14px;
+        border: 2px solid #e2e8f0;
+        background: white;
+        font-size: 14px;
+        line-height: 1.5;
+        cursor: pointer;
+        margin-bottom: 8px;
+        transition: 0.15s;
+        color: var(--text);
+    }
+
+    .quiz-opt:active { transform: scale(0.98); }
+    .quiz-opt.correct { background: #dcfce7; border-color: #16a34a; color: #15803d; font-weight: bold; }
+    .quiz-opt.wrong   { background: #fee2e2; border-color: #dc2626; color: #991b1b; }
+    .quiz-opt.dim     { opacity: 0.45; }
+
+    .explain-box {
+        background: #f0f9ff;
+        border-left: 4px solid #0ea5e9;
+        border-radius: 0 12px 12px 0;
+        padding: 14px;
+        font-size: 14px;
+        line-height: 1.6;
+        color: #0c4a6e;
+        margin-top: 8px;
+    }
+
+    .wrong-card {
+        background: white;
+        border-radius: 18px;
+        padding: 18px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        text-align: left;
+    }
+
+    .tag {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .tag-role    { background: #fef3c7; color: #92400e; }
+    .tag-concept { background: #ede9fe; color: #5b21b6; }
+
+    .study-menu-btn {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: calc(100% - 40px);
+        margin: 8px 20px 0;
+        padding: 18px 20px;
+        border-radius: 20px;
+        border: none;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.15s;
+        text-align: left;
+    }
+
+    .study-menu-btn:active { transform: scale(0.97); }
+
+    .result-circle {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        border: 8px solid var(--primary);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+    }
+
+    .fade-in { animation: fadeIn 0.4s ease-out; }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .bounce { animation: bounce 2s infinite; }
+
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50%       { transform: translateY(-10px); }
+    }
+
+    .wobble {
+        animation: wobble 1.5s infinite ease-in-out;
+        display: inline-block;
+        transform-origin: bottom center;
+    }
+
+    @keyframes wobble {
+        0%, 100% { transform: rotate(0deg); }
+        25%       { transform: rotate(-10deg); }
+        75%       { transform: rotate(10deg); }
+    }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+    const { useState, useEffect, useCallback } = React;
+
+    /* ══════════════════════════════
+       SVG 아이콘
+    ══════════════════════════════ */
+    const SVGS = {
+        Stage1: () => (
+            <svg width="120" height="120" viewBox="0 0 24 24" fill="#f472b6">
+                <circle cx="12" cy="14" r="5" />
+                <circle cx="7" cy="9" r="2" />
+                <circle cx="10" cy="6" r="2" />
+                <circle cx="14" cy="6" r="2" />
+                <circle cx="17" cy="9" r="2" />
+            </svg>
+        ),
+        Stage5: () => (
+            <svg width="140" height="140" viewBox="0 0 24 24" fill="none">
+                <path d="M12 21C16.4183 21 20 17.4183 20 13C20 8.58172 16.4183 5 12 5C7.58172 5 4 8.58172 4 13C4 17.4183 7.58172 21 12 21Z" fill="#1e293b" />
+                <path d="M7 6L4 2L3 8" fill="#1e293b" stroke="#1e293b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M17 6L20 2L21 8" fill="#1e293b" stroke="#1e293b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="9" cy="13" r="1.5" fill="white" />
+                <circle cx="15" cy="13" r="1.5" fill="white" />
+                <path d="M12 15V17M12 17C11 17 10 16.5 10 16M12 17C13 17 14 16.5 14 16" stroke="white" strokeWidth="1" strokeLinecap="round" />
+            </svg>
+        ),
+        Breath: () => <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#14b8a6" strokeWidth="2"><path d="M2 12h10m10 0h-2M7 16h10M5 8h12" /></svg>,
+        Water:  () => <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" /></svg>,
+        Find:   () => <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2"><circle cx="12" cy="13" r="4" /><rect width="18" height="18" x="3" y="3" rx="2" /></svg>,
+        Move:   () => <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2"><path d="M4 16v4h4m-4 0l16-16" /></svg>,
+        Ear:    () => <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3 3 0 1 1-6 0" /></svg>
+    };
+
+    /* ══════════════════════════════
+       퀴즈 문제 은행
+       type: 'concept' | 'role'
+    ══════════════════════════════ */
+    const QUIZ_BANK = [
+        /* ── 개념 퀴즈 ── */
+        {
+            id: 1, type: 'concept',
+            code: null,
+            q: 'useState 훅의 역할은 무엇인가요?',
+            opts: [
+                '컴포넌트에 상태(state)를 추가하고, 상태가 바뀌면 리렌더링을 유발한다',
+                '서버에 데이터를 전송한다',
+                'DOM 요소를 직접 선택한다',
+                'CSS 스타일을 동적으로 바꾼다'
+            ],
+            ans: 0,
+            exp: 'useState는 함수형 컴포넌트에 상태를 추가합니다. 반환값 [값, setter]에서 setter를 호출하면 리렌더링이 발생합니다.'
+        },
+        {
+            id: 2, type: 'concept',
+            code: null,
+            q: 'useEffect의 의존성 배열이 [] (빈 배열)일 때 언제 실행되나요?',
+            opts: [
+                '매 리렌더링마다',
+                '컴포넌트가 처음 마운트될 때 한 번만',
+                '절대 실행되지 않는다',
+                '배열 값이 변경될 때마다'
+            ],
+            ans: 1,
+            exp: '의존성 배열이 []이면 최초 마운트 시 1회만 실행됩니다. 배열을 생략하면 매 렌더링마다, 특정 값을 넣으면 그 값이 바뀔 때 실행됩니다.'
+        },
+        {
+            id: 3, type: 'concept',
+            code: null,
+            q: 'useCallback과 useMemo의 차이는?',
+            opts: [
+                '차이 없다, 단순 취향 차이',
+                'useCallback은 함수를 메모이제이션, useMemo는 계산 결과값을 메모이제이션',
+                'useCallback은 값을, useMemo는 함수를 반환한다',
+                'useCallback은 클래스 컴포넌트에만 사용된다'
+            ],
+            ans: 1,
+            exp: 'useCallback(() => fn, deps)는 함수 자체를, useMemo(() => value, deps)는 연산 결과값을 캐싱합니다.'
+        },
+        {
+            id: 4, type: 'concept',
+            code: null,
+            q: 'React에서 리스트 렌더링 시 key prop이 필요한 이유는?',
+            opts: [
+                '스타일을 적용하기 위해',
+                '각 요소를 고유하게 식별해 효율적으로 DOM을 업데이트하기 위해',
+                '이벤트 핸들러를 연결하기 위해',
+                'CSS 클래스를 지정하기 위해'
+            ],
+            ans: 1,
+            exp: 'key는 React가 어떤 항목이 변경/추가/삭제되었는지 파악하는 데 사용됩니다. key가 없으면 전체 목록을 다시 렌더링할 수 있습니다.'
+        },
+        {
+            id: 5, type: 'concept',
+            code: null,
+            q: 'JavaScript에서 구조분해할당(destructuring)이란?',
+            opts: [
+                '객체나 배열을 삭제하는 문법',
+                '객체나 배열에서 값을 꺼내 변수에 한 번에 할당하는 문법',
+                '배열을 정렬하는 방법',
+                '변수를 객체로 합치는 방법'
+            ],
+            ans: 1,
+            exp: '구조분해할당으로 const { a, b } = obj 처럼 객체의 속성을 한 줄에 변수로 꺼낼 수 있습니다. 배열도 const [x, y] = arr 형태로 가능합니다.'
+        },
+        /* ── 코드 역할 체크 ── */
+        {
+            id: 6, type: 'role',
+            code: `const { useState, useEffect, useCallback } = React;`,
+            q: '이 코드에서 구조분해할당을 사용한 이유는?',
+            opts: [
+                'React를 삭제하기 위해',
+                'React의 훅을 짧게 바로 쓰기 위해 변수로 꺼낸다',
+                'React를 복사하기 위해',
+                '훅을 비활성화하기 위해'
+            ],
+            ans: 1,
+            exp: '구조분해할당으로 React.useState → useState처럼 짧게 쓸 수 있습니다. 이후 코드가 훨씬 간결해집니다.'
+        },
+        {
+            id: 7, type: 'role',
+            code: `const [view, setView] = useState('HOME');`,
+            q: "setView('SUDOKU')를 호출하면 어떤 일이 발생하나요?",
+            opts: [
+                '아무 일도 일어나지 않는다',
+                "view 값이 'SUDOKU'로 바뀌고 컴포넌트가 리렌더링된다",
+                'SUDOKU 컴포넌트가 새로 생성된다',
+                "view가 'SUDOKU' 문자열을 삭제한다"
+            ],
+            ans: 1,
+            exp: 'setter(setView)를 호출하면 state가 업데이트되고 React가 컴포넌트를 리렌더링합니다. 새 view 값으로 다른 화면이 조건부 렌더링됩니다.'
+        },
+        {
+            id: 8, type: 'role',
+            code: `useEffect(() => {
+  let t;
+  if (view === 'STATIC' && timeLeft > 0)
+    t = setInterval(() => setTimeLeft(p => p - 1), 1000);
+  return () => clearInterval(t);
+}, [view, timeLeft]);`,
+            q: 'return () => clearInterval(t) 는 언제 실행되나요?',
+            opts: [
+                '컴포넌트가 처음 렌더링될 때',
+                '의존성 값이 바뀌거나 컴포넌트가 언마운트될 때 (cleanup)',
+                'setInterval이 처음 시작될 때',
+                'timeLeft가 0이 됐을 때'
+            ],
+            ans: 1,
+            exp: 'useEffect의 return 함수는 cleanup 함수입니다. 이전 effect를 정리해 타이머가 중복 생성되는 것을 막습니다.'
+        },
+        {
+            id: 9, type: 'role',
+            code: `const nb = [...b];`,
+            q: '[...b] 스프레드 연산자로 새 배열을 만드는 이유는?',
+            opts: [
+                'b 배열을 비우기 위해',
+                '원본 배열을 직접 수정하지 않고 불변성(immutability)을 유지하기 위해',
+                '배열을 정렬하기 위해',
+                '배열 길이를 늘리기 위해'
+            ],
+            ans: 1,
+            exp: 'React state를 직접 수정하면 리렌더링이 발생하지 않습니다. 복사본을 만들어 수정 후 setter로 교체해야 올바르게 동작합니다.'
+        },
+        {
+            id: 10, type: 'role',
+            code: `b.map((v, i) => v === 0 ? i : null)
+ .filter(v => v !== null)`,
+            q: '이 코드의 최종 결과는 무엇인가요?',
+            opts: [
+                '배열의 모든 0을 제거한 배열',
+                '배열에서 값이 0인 칸들의 인덱스(위치) 목록',
+                '배열에서 null인 요소들의 배열',
+                '배열의 총 길이'
+            ],
+            ans: 1,
+            exp: 'map으로 0이면 인덱스, 아니면 null로 변환 → filter로 null 제거. 결과는 값이 0인 빈 칸들의 인덱스 배열입니다. (2048의 빈 칸 탐색에 사용)'
+        },
+        {
+            id: 11, type: 'role',
+            code: `if (pos === 81) return true;`,
+            q: '스도쿠 solve 함수에서 이 조건의 의미는?',
+            opts: [
+                '81번째 위치에서 에러를 방지하기 위해',
+                '9×9 = 81칸 모두를 채웠으므로 풀기 성공',
+                'pos가 81이면 배열 범위를 초과하므로 종료',
+                '81은 스도쿠 최대 입력값이라서'
+            ],
+            ans: 1,
+            exp: '0~80 인덱스를 모두 채우면 pos가 81이 됩니다. 이는 81칸 전체를 성공적으로 채웠다는 의미이므로 true(성공)를 반환합니다.'
+        },
+        {
+            id: 12, type: 'role',
+            code: `grid-template-columns: repeat(9, 1fr);`,
+            q: '이 CSS가 만드는 레이아웃은?',
+            opts: [
+                '9개의 행(가로 줄)',
+                '9개의 동일한 너비 열(세로 줄)',
+                '9px 크기의 열 하나',
+                '전체 너비의 9배 컨테이너'
+            ],
+            ans: 1,
+            exp: 'grid-template-columns는 열(column)을 정의합니다. repeat(9, 1fr)은 가용 공간을 9등분한 동일 너비 열 9개를 생성합니다. 스도쿠 9칸 그리드에 사용됩니다.'
+        },
+        {
+            id: 13, type: 'role',
+            code: `dangerouslySetInnerHTML={{ __html: missions[idx]?.desc }}`,
+            q: 'dangerouslySetInnerHTML을 사용한 이유는?',
+            opts: [
+                '보안을 강화하기 위해',
+                'desc에 포함된 <b> 같은 HTML 태그를 실제로 렌더링하기 위해',
+                'desc를 암호화하기 위해',
+                'XSS를 방어하기 위해'
+            ],
+            ans: 1,
+            exp: "desc에 <b>{color}</b> 같은 HTML이 있어 이를 실제 태그로 렌더링하려면 이 속성이 필요합니다. 단, XSS 위험이 있어 신뢰된 데이터에만 사용해야 합니다."
+        },
+        {
+            id: 14, type: 'role',
+            code: `missions[idx]?.icon`,
+            q: '?. (옵셔널 체이닝)의 역할은?',
+            opts: [
+                '곱셈 연산자',
+                'missions[idx]가 없을 때 에러 대신 undefined를 반환',
+                'icon을 선택적으로 삭제',
+                '삼항 연산자의 축약형'
+            ],
+            ans: 1,
+            exp: '옵셔널 체이닝(?.)은 앞의 값이 null/undefined이면 TypeError 없이 undefined를 반환합니다. 데이터가 없을 때 앱이 crash되지 않도록 방어합니다.'
+        },
+        {
+            id: 15, type: 'role',
+            code: `backdrop-filter: blur(10px);`,
+            q: '이 CSS가 만드는 시각적 효과는?',
+            opts: [
+                '요소 자체를 흐리게',
+                '요소 뒤 배경만 흐리게 (frosted glass 효과)',
+                '텍스트에 블러를 적용',
+                '그림자를 흐리게'
+            ],
+            ans: 1,
+            exp: 'backdrop-filter는 요소 뒤의 배경에만 필터를 적용합니다. blur()와 함께 써서 반투명 유리처럼 보이는 glassmorphism 디자인을 만듭니다.'
+        },
+        {
+            id: 16, type: 'role',
+            code: `height: 100dvh;`,
+            q: '100dvh를 100vh 대신 쓰는 이유는?',
+            opts: [
+                '차이 없다, 단순 선호 차이',
+                '모바일 주소창 높이를 동적으로 반영해 화면 잘림을 방지하기 위해',
+                'PC 화면에서만 작동하게 하려고',
+                '가로 기준으로 설정하려고'
+            ],
+            ans: 1,
+            exp: 'vh는 주소창 유무와 무관한 고정값이라 모바일에서 잘릴 수 있습니다. dvh(dynamic vh)는 주소창이 보이고 숨겨지는 것을 동적으로 반영합니다.'
+        },
+        {
+            id: 17, type: 'role',
+            code: `const cellsToRemove = 40 + Math.floor(Math.random() * 11);`,
+            q: '이 코드에서 제거되는 칸의 범위는?',
+            opts: [
+                '정확히 40칸',
+                '40 ~ 50칸 (랜덤)',
+                '11 ~ 40칸 (랜덤)',
+                '0 ~ 51칸 (랜덤)'
+            ],
+            ans: 1,
+            exp: 'Math.random()은 0 이상 1 미만, Math.floor(...*11)은 0~10 정수. 따라서 40+0=40 ~ 40+10=50 범위입니다.'
+        },
+        {
+            id: 18, type: 'role',
+            code: `for (let i = a.length - 1; i > 0; i--) {
+  const j = Math.floor(Math.random() * (i + 1));
+  [a[i], a[j]] = [a[j], a[i]];
+}`,
+            q: '이 알고리즘의 이름과 역할은?',
+            opts: [
+                '버블 정렬 — 배열을 오름차순으로 정렬',
+                '피셔-예이츠 셔플 — 배열을 균등 확률로 무작위 섞기',
+                '이진 탐색 — 배열에서 원소를 빠르게 탐색',
+                '선택 정렬 — 배열에서 최솟값을 차례로 선택'
+            ],
+            ans: 1,
+            exp: '배열 끝에서 앞으로 순회하며 현재 위치와 랜덤 위치 요소를 교환하는 Fisher-Yates 셔플입니다. 균등한 확률로 배열을 섞습니다.'
+        }
+    ];
+
+    /* ══════════════════════════════
+       기존 미션 / 유혹 데이터
+    ══════════════════════════════ */
+    const MISSION_POOL = [
+        { title: "깊은 호흡",   desc: "코로 4초 들이마시고 6초 내뱉으세요.",             icon: <SVGS.Breath /> },
+        { title: "물 한 잔",    desc: "시원한 물을 마시며 목넘김에 집중하세요.",          icon: <SVGS.Water /> },
+        { title: "색깔 찾기",  desc: "주변에서 <b>{color}</b> 물건 5개를 찾아보세요.", icon: <SVGS.Find /> },
+        { title: "거꾸로 빼기",desc: "100에서 <b>{num}</b>을 0이 될 때까지 빼보세요.",  icon: <SVGS.Breath /> },
+        { title: "스트레칭",   desc: "기지개를 크게 켜고 몸을 이완하세요.",              icon: <SVGS.Move /> },
+        { title: "귀 조물조물",desc: "귓바퀴를 위아래로 꾹꾹 주물러보세요.",            icon: <SVGS.Ear /> }
+    ];
+
+    const TEMPTATIONS = [
+        { id: 'food',  label: '🍕 야식 참기',     msg: '꼬르륵 소리는 무시하라냥!' },
+        { id: 'shop',  label: '💳 결제 참기',     msg: '택배 박스보다 집사 무릎이 좋다냥!' },
+        { id: 'phone', label: '📱 폰 내려놓기',   msg: '작은 화면 대신 나를 보라냥!' },
+        { id: 'anger', label: '🔥 홧병 다스리기', msg: '하악질 대신 심호흡이다냥!' },
+        { id: 'lazy',  label: '🛌 미루지 않기',   msg: '지금 움직여야 나중에 꿀잠 잔다냥!' }
+    ];
+
+    /* ══════════════════════════════
+       스도쿠 생성기
+    ══════════════════════════════ */
+    const generateSudoku = () => {
+        const board = Array(81).fill(0);
+        const isValid = (b, pos, num) => {
+            const row = Math.floor(pos / 9), col = pos % 9;
+            for (let c = 0; c < 9; c++) if (b[row * 9 + c] === num) return false;
+            for (let r = 0; r < 9; r++) if (b[r * 9 + col] === num) return false;
+            const br = Math.floor(row / 3) * 3, bc = Math.floor(col / 3) * 3;
+            for (let r = br; r < br + 3; r++)
+                for (let c = bc; c < bc + 3; c++)
+                    if (b[r * 9 + c] === num) return false;
+            return true;
+        };
+        const shuffle = arr => {
+            const a = [...arr];
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        };
+        const solve = (b, pos = 0) => {
+            if (pos === 81) return true;
+            if (b[pos] !== 0) return solve(b, pos + 1);
+            for (const num of shuffle([1,2,3,4,5,6,7,8,9])) {
+                if (isValid(b, pos, num)) {
+                    b[pos] = num;
+                    if (solve(b, pos + 1)) return true;
+                    b[pos] = 0;
+                }
+            }
+            return false;
+        };
+        solve(board);
+        const solution = [...board];
+        const n = 40 + Math.floor(Math.random() * 11);
+        shuffle([...Array(81).keys()]).slice(0, n).forEach(i => board[i] = 0);
+        return { puzzle: board, solution };
+    };
+
+    /* ══════════════════════════════
+       App 컴포넌트
+    ══════════════════════════════ */
+    const App = () => {
+        /* ── 기존 상태 ── */
+        const [view, setView]               = useState('HOME');
+        const [missions, setMissions]       = useState([]);
+        const [idx, setIdx]                 = useState(0);
+        const [timeLeft, setTimeLeft]       = useState(600);
+        const [board, setBoard]             = useState(Array(16).fill(0));
+        const [score, setScore]             = useState(0);
+        const [sudokuBoard, setSudokuBoard] = useState([]);
+        const [sudokuFixed, setSudokuFixed] = useState([]);
+        const [sudokuSelected, setSudokuSelected] = useState(-1);
+        const [sudokuSolution, setSudokuSolution] = useState([]);
+        const [selectedTemp, setSelectedTemp] = useState('');
+
+        /* ── 코드 공부 상태 ── */
+        const [quizQs, setQuizQs]       = useState([]);   // 현재 세션 문제 목록
+        const [quizIdx, setQuizIdx]     = useState(0);    // 현재 문제 번호
+        const [chosen, setChosen]       = useState(null); // 선택한 보기 인덱스 (null = 미선택)
+        const [quizMode, setQuizMode]   = useState('all');
+        const [sessionWrong, setSessionWrong] = useState([]); // 이번 세션 오답 id 목록
+
+        // 오답 노트: localStorage에서 복원
+        const [wrongList, setWrongList] = useState(() => {
+            try { return JSON.parse(localStorage.getItem('codeWrong') || '[]'); }
+            catch { return []; }
+        });
+
+        // wrongList 변경 시 자동 저장
+        useEffect(() => {
+            try { localStorage.setItem('codeWrong', JSON.stringify(wrongList)); }
+            catch {}
+        }, [wrongList]);
+
+        /* ── 타이머 ── */
+        useEffect(() => {
+            let t;
+            if (view === 'STATIC' && timeLeft > 0)
+                t = setInterval(() => setTimeLeft(p => p - 1), 1000);
+            return () => clearInterval(t);
+        }, [view, timeLeft]);
+
+        /* ── 기존 로직 ── */
+        const startStatic = () => {
+            const color = ["빨간색","파란색","노란색","초록색","보라색"][Math.floor(Math.random() * 5)];
+            const num   = [3,4,7,8,9][Math.floor(Math.random() * 5)];
+            const shuffled = [...MISSION_POOL]
+                .sort(() => Math.random() - 0.5).slice(0, 5)
+                .map(m => ({ ...m, desc: m.desc.replace('{color}', color).replace('{num}', num) }));
+            setMissions(shuffled); setIdx(0); setTimeLeft(600); setView('STATIC');
+        };
+
+        const handleStepComplete = () => {
+            if (idx < missions.length - 1) {
+                setView('INTER_SUCCESS');
+                setTimeout(() => { setIdx(idx + 1); setView('STATIC'); }, 1500);
+            } else {
+                confetti({ particleCount: 150, spread: 70 });
+                setView('FINAL_SUCCESS');
+            }
+        };
+
+        const spawn = useCallback((b) => {
+            const empty = b.map((v, i) => v === 0 ? i : null).filter(v => v !== null);
+            if (empty.length === 0) return b;
+            const nb = [...b];
+            nb[empty[Math.floor(Math.random() * empty.length)]] = 2;
+            return nb;
+        }, []);
+
+        const move = useCallback((dir) => {
+            let nb = [...board]; let moved = false; let sc = score;
+            const rot = (b) => {
+                const r = Array(16).fill(0);
+                for (let i = 0; i < 4; i++)
+                    for (let j = 0; j < 4; j++)
+                        r[j * 4 + (3 - i)] = b[i * 4 + j];
+                return r;
+            };
+            let rs = { LEFT: 0, UP: 3, RIGHT: 2, DOWN: 1 }[dir];
+            for (let i = 0; i < rs; i++) nb = rot(nb);
+            for (let i = 0; i < 4; i++) {
+                let r = nb.slice(i * 4, i * 4 + 4).filter(v => v !== 0);
+                for (let j = 0; j < r.length - 1; j++) {
+                    if (r[j] === r[j + 1]) { r[j] *= 2; sc += r[j]; r.splice(j + 1, 1); moved = true; }
+                }
+                while (r.length < 4) r.push(0);
+                r.forEach((v, j) => { if (nb[i * 4 + j] !== v) moved = true; nb[i * 4 + j] = v; });
+            }
+            for (let i = 0; i < (4 - rs) % 4; i++) nb = rot(nb);
+            if (moved) {
+                setBoard(spawn(nb)); setScore(sc);
+                if (sc >= 500) { confetti(); setView('FINAL_SUCCESS'); }
+            }
+        }, [board, score, spawn]);
+
+        /* ── 퀴즈 로직 ── */
+        const startQuiz = (mode) => {
+            let qs;
+            if (mode === 'role')  qs = QUIZ_BANK.filter(q => q.type === 'role').sort(() => Math.random() - 0.5);
+            else if (mode === 'wrong') {
+                const ids = wrongList.map(w => w.id);
+                qs = QUIZ_BANK.filter(q => ids.includes(q.id)).sort(() => Math.random() - 0.5);
+            }
+            else qs = [...QUIZ_BANK].sort(() => Math.random() - 0.5);
+
+            setQuizQs(qs); setQuizIdx(0); setChosen(null);
+            setSessionWrong([]); setQuizMode(mode); setView('CODE_QUIZ');
+        };
+
+        const handleAnswer = (i) => {
+            if (chosen !== null) return; // 이미 선택함
+            setChosen(i);
+            const q = quizQs[quizIdx];
+            if (i !== q.ans) {
+                // 오답 → 오답 노트에 추가 (중복 방지)
+                setSessionWrong(prev => [...prev, q.id]);
+                setWrongList(prev => prev.find(w => w.id === q.id) ? prev : [...prev, { id: q.id, at: Date.now() }]);
+            } else {
+                // 정답 → 오답 노트에서 제거
+                setWrongList(prev => prev.filter(w => w.id !== q.id));
+            }
+        };
+
+        const nextQuestion = () => {
+            if (quizIdx < quizQs.length - 1) {
+                setQuizIdx(quizIdx + 1);
+                setChosen(null);
+            } else {
+                if (sessionWrong.length === 0) confetti({ particleCount: 120, spread: 60 });
+                setView('QUIZ_RESULT');
+            }
+        };
+
+        const currentQ = quizQs[quizIdx];
+
+        /* ══════════════════════════════
+           렌더링
+        ══════════════════════════════ */
+        return (
+            <div className="app-frame">
+
+                {/* ── HOME ── */}
+                {view === 'HOME' && (
+                    <div className="center-screen fade-in" style={{ justifyContent: 'space-between', paddingTop: 40, paddingBottom: 30 }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <div className="wobble" style={{ marginBottom: 10 }}><SVGS.Stage5 /></div>
+                            <h2 style={{ color: '#1e3a8a', marginTop: 20, fontSize: 24 }}>잠깐, 집사! 앞발 치워! 🐾</h2>
+                            <p style={{ color: '#64748b', marginBottom: 10, lineHeight: 1.5 }}>
+                                지금 그 마음, 나랑 딱 10분만<br />다른 생각하면서 식혀보자냥.
+                            </p>
+                            <button className="btn-action" style={{ color: 'var(--accent)' }}
+                                onClick={() => setView('TEMP_SELECT')}>
+                                마음 가다듬기 시작
+                            </button>
+                        </div>
+
+                        <div style={{ width: '100%', borderTop: '1.5px dashed #e2e8f0', paddingTop: 20 }}>
+                            <p style={{ textAlign: 'center', fontSize: 12, color: '#94a3b8', margin: '0 0 10px' }}>코드 공부 모드</p>
+                            <button className="btn-action"
+                                style={{ background: '#0f172a', margin: '0 20px', width: 'calc(100% - 40px)', fontSize: 16 }}
+                                onClick={() => setView('STUDY_HOME')}>
+                                📖 코드 공부하기
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── TEMP_SELECT ── */}
+                {view === 'TEMP_SELECT' && (
+                    <div className="center-screen fade-in">
+                        <h2 style={{ marginBottom: 30, color: '#1e3a8a' }}>오늘 무엇을 <br />이겨내고 싶냥?</h2>
+                        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            {TEMPTATIONS.map(t => (
+                                <button key={t.id} className="btn-action"
+                                    style={{ margin: '5px auto', background: 'white', color: 'var(--text)', border: '1px solid #ddd' }}
+                                    onClick={() => { setSelectedTemp(t.msg); setView('SELECT'); }}>
+                                    {t.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* ── SELECT ── */}
+                {view === 'SELECT' && (
+                    <div className="center-screen fade-in">
+                        <h2 style={{ marginBottom: 40 }}>방법을 골라줘!</h2>
+                        <button className="btn-action" onClick={startStatic}>🧘 정적인 미션 (5단계)</button>
+                        <button className="btn-action"
+                            style={{ background: 'white', color: 'var(--primary)', border: '2px solid var(--primary)' }}
+                            onClick={() => { setBoard(spawn(spawn(Array(16).fill(0)))); setScore(0); setView('GAME'); }}>
+                            🎮 2048 퍼즐
+                        </button>
+                        <button className="btn-action"
+                            style={{ background: '#f59e0b', color: 'white' }}
+                            onClick={() => {
+                                const { puzzle, solution } = generateSudoku();
+                                setSudokuBoard([...puzzle]);
+                                setSudokuFixed(puzzle.map(v => v !== 0));
+                                setSudokuSolution(solution);
+                                setSudokuSelected(-1);
+                                setView('SUDOKU');
+                            }}>
+                            🧩 스도쿠 게임
+                        </button>
+                    </div>
+                )}
+
+                {/* ── STATIC ── */}
+                {view === 'STATIC' && (
+                    <div className="screen fade-in">
+                        <div className="timer-header">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                                <span style={{ fontSize: 12, fontWeight: 'bold', color: '#93c5fd' }}>KEEP GOING</span>
+                                <div className="timer-val">
+                                    {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+                                </div>
+                            </div>
+                            <div className="prog-bg">
+                                <div className="prog-fill" style={{ width: `${(timeLeft / 600) * 100}%` }}></div>
+                            </div>
+                            {selectedTemp && (
+                                <div style={{ textAlign: 'center', marginTop: 15, color: '#93c5fd', fontWeight: 'bold', fontSize: 14 }}>
+                                    집사야, {selectedTemp}
+                                </div>
+                            )}
+                        </div>
+                        <div className="mission-card">
+                            {missions[idx]?.icon}
+                            <h2 style={{ color: '#1e3a8a', margin: '20px 0 10px' }}>{missions[idx]?.title}</h2>
+                            <p style={{ lineHeight: 1.6, fontSize: 18 }}
+                               dangerouslySetInnerHTML={{ __html: missions[idx]?.desc }}></p>
+                            <span style={{ fontSize: 12, color: '#94a3b8', marginTop: 15 }}>Step {idx + 1} / 5</span>
+                        </div>
+                        <button className="btn-action" onClick={handleStepComplete}>미션 완료</button>
+                    </div>
+                )}
+
+                {/* ── INTER_SUCCESS ── */}
+                {view === 'INTER_SUCCESS' && (
+                    <div className="center-screen fade-in">
+                        <div className="bounce"><SVGS.Stage1 /></div>
+                        <div className="success-card">
+                            <h2 style={{ color: '#059669', margin: '0 0 10px' }}>젤리 발견!🐾</h2>
+                            <p>앗, 귀여운 발바닥 젤리 발견!<br />당신의 의지가 움직이기 시작했어요.</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── FINAL_SUCCESS ── */}
+                {view === 'FINAL_SUCCESS' && (
+                    <div className="center-screen fade-in">
+                        <div className="bounce"><SVGS.Stage5 /></div>
+                        <div className="success-card" style={{ marginBottom: 30 }}>
+                            <h2 style={{ color: '#b45309', margin: '0 0 10px' }}>최고다냥!❤️</h2>
+                            <p>고양이가 당신을 꼬옥 안아줘요!<br />해낸 당신이 진짜 최고예요!</p>
+                        </div>
+                        <button className="btn-action" onClick={() => setView('HOME')}>메인으로 돌아가기</button>
+                    </div>
+                )}
+
+                {/* ── GAME (2048) ── */}
+                {view === 'GAME' && (
+                    <div className="screen fade-in" style={{ paddingTop: 40 }}>
+                        <div style={{ textAlign: 'center' }}>
+                            {selectedTemp && (
+                                <div style={{ color: '#1e3a8a', fontWeight: 'bold', marginBottom: 15, fontSize: 16 }}>
+                                    집사야, {selectedTemp}
+                                </div>
+                            )}
+                            <h3>Score: {score} / 500</h3>
+                            <div className="game-board"
+                                onTouchStart={(e) => window.ts = { x: e.touches[0].clientX, y: e.touches[0].clientY }}
+                                onTouchEnd={(e) => {
+                                    const dx = e.changedTouches[0].clientX - window.ts.x;
+                                    const dy = e.changedTouches[0].clientY - window.ts.y;
+                                    if (Math.abs(dx) > 30 || Math.abs(dy) > 30)
+                                        move(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'RIGHT' : 'LEFT') : (dy > 0 ? 'DOWN' : 'UP'));
+                                }}>
+                                {board.map((v, i) => (
+                                    <div key={i} className={`tile tile-${v}`}>{v || ''}</div>
+                                ))}
+                            </div>
+                        </div>
+                        <button className="btn-action" style={{ background: '#94a3b8' }} onClick={() => setView('HOME')}>
+                            그만두기
+                        </button>
+                    </div>
+                )}
+
+                {/* ── SUDOKU ── */}
+                {view === 'SUDOKU' && (
+                    <div className="screen fade-in" style={{ paddingTop: 20 }}>
+                        <div style={{ textAlign: 'center' }}>
+                            {selectedTemp && (
+                                <div style={{ color: '#1e3a8a', fontWeight: 'bold', margin: '20px 0 10px', fontSize: 16 }}>
+                                    집사야, {selectedTemp}
+                                </div>
+                            )}
+                            <h3 style={{ margin: '10px 0' }}>스도쿠 퍼즐</h3>
+                            <div className="sudoku-board">
+                                {sudokuBoard.map((val, i) => (
+                                    <div key={i}
+                                        className={`sudoku-cell ${sudokuFixed[i] ? 'fixed' : ''} ${sudokuSelected === i ? 'selected' : ''}`}
+                                        style={{
+                                            borderRight:  i % 3 === 2 && i % 9 !== 8 ? '2px solid #776e65' : 'none',
+                                            borderBottom: Math.floor(i / 9) % 3 === 2 && Math.floor(i / 9) !== 8 ? '2px solid #776e65' : 'none'
+                                        }}
+                                        onClick={() => !sudokuFixed[i] && setSudokuSelected(i)}>
+                                        {val !== 0 ? val : ''}
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="sudoku-numpad">
+                                {[1,2,3,4,5,6,7,8,9,'지우기'].map(num => (
+                                    <button key={num} className="sudoku-num-btn"
+                                        onClick={() => {
+                                            if (sudokuSelected !== -1 && !sudokuFixed[sudokuSelected]) {
+                                                if (num === '지우기') {
+                                                    const nb = [...sudokuBoard]; nb[sudokuSelected] = 0; setSudokuBoard(nb);
+                                                } else if (num === sudokuSolution[sudokuSelected]) {
+                                                    const nb = [...sudokuBoard]; nb[sudokuSelected] = num; setSudokuBoard(nb);
+                                                    confetti({ particleCount: 50, spread: 50, origin: { y: 0.7 } });
+                                                    if (nb.join('') === sudokuSolution.join('')) {
+                                                        setTimeout(() => { confetti({ particleCount: 150, spread: 70 }); setView('FINAL_SUCCESS'); }, 500);
+                                                    }
+                                                } else {
+                                                    alert("앗! 오답이다냥 😿 다시 생각해보라냥!");
+                                                }
+                                            }
+                                        }}>
+                                        {num}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <button className="btn-action" style={{ background: '#94a3b8', marginTop: 20 }}
+                            onClick={() => setView('HOME')}>
+                            그만두기
+                        </button>
+                    </div>
+                )}
+
+                {/* ════════════════════════
+                    코드 공부 뷰들
+                ════════════════════════ */}
+
+                {/* ── STUDY_HOME ── */}
+                {view === 'STUDY_HOME' && (
+                    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                        <div style={{ padding: '30px 20px 16px', background: '#0f172a', color: 'white', borderRadius: '0 0 28px 28px', flexShrink: 0 }}>
+                            <div style={{ fontSize: 13, color: '#94a3b8', marginBottom: 6 }}>CODE STUDY</div>
+                            <h2 style={{ margin: 0, fontSize: 22 }}>📖 코드 공부</h2>
+                            <div style={{ fontSize: 13, color: '#64748b', marginTop: 8 }}>
+                                이 파일의 코드를 얼마나 이해하고 있나요?
+                            </div>
+                        </div>
+
+                        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 0 10px' }}>
+                            <button className="study-menu-btn"
+                                style={{ background: '#eff6ff', color: '#1e3a8a' }}
+                                onClick={() => startQuiz('all')}>
+                                <span style={{ fontSize: 28 }}>📝</span>
+                                <div>
+                                    <div style={{ fontWeight: 900 }}>전체 퀴즈</div>
+                                    <div style={{ fontSize: 12, color: '#64748b', fontWeight: 400 }}>개념 + 코드 역할 {QUIZ_BANK.length}문제</div>
+                                </div>
+                            </button>
+
+                            <button className="study-menu-btn"
+                                style={{ background: '#fefce8', color: '#713f12' }}
+                                onClick={() => startQuiz('role')}>
+                                <span style={{ fontSize: 28 }}>🔍</span>
+                                <div>
+                                    <div style={{ fontWeight: 900 }}>코드 역할 체크</div>
+                                    <div style={{ fontSize: 12, color: '#92400e', fontWeight: 400 }}>코드 스니펫 보고 역할 맞추기</div>
+                                </div>
+                            </button>
+
+                            <button className="study-menu-btn"
+                                style={{ background: wrongList.length > 0 ? '#fff1f2' : '#f8fafc', color: wrongList.length > 0 ? '#9f1239' : '#94a3b8' }}
+                                onClick={() => setView('WRONG_NOTES')}>
+                                <span style={{ fontSize: 28 }}>📚</span>
+                                <div>
+                                    <div style={{ fontWeight: 900 }}>
+                                        오답 노트
+                                        {wrongList.length > 0 && (
+                                            <span style={{ marginLeft: 8, background: '#e11d48', color: 'white', borderRadius: 20, padding: '2px 8px', fontSize: 12 }}>
+                                                {wrongList.length}개
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div style={{ fontSize: 12, fontWeight: 400 }}>틀린 문제만 모아보기</div>
+                                </div>
+                            </button>
+
+                            {wrongList.length > 0 && (
+                                <button className="study-menu-btn"
+                                    style={{ background: '#fdf4ff', color: '#6b21a8' }}
+                                    onClick={() => startQuiz('wrong')}>
+                                    <span style={{ fontSize: 28 }}>🔄</span>
+                                    <div>
+                                        <div style={{ fontWeight: 900 }}>오답만 다시 풀기</div>
+                                        <div style={{ fontSize: 12, color: '#7e22ce', fontWeight: 400 }}>틀린 {wrongList.length}문제 집중 복습</div>
+                                    </div>
+                                </button>
+                            )}
+                        </div>
+
+                        <button className="btn-action"
+                            style={{ background: 'transparent', color: '#94a3b8', boxShadow: 'none', border: '1.5px solid #e2e8f0', marginBottom: 20 }}
+                            onClick={() => setView('HOME')}>
+                            ← 뒤로
+                        </button>
+                    </div>
+                )}
+
+                {/* ── CODE_QUIZ ── */}
+                {view === 'CODE_QUIZ' && currentQ && (
+                    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                        {/* 헤더 */}
+                        <div className="quiz-header">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: 12, color: '#94a3b8' }}>
+                                    {quizMode === 'role' ? '🔍 코드 역할 체크' : quizMode === 'wrong' ? '🔄 오답 복습' : '📝 전체 퀴즈'}
+                                </span>
+                                <span style={{ fontSize: 13, color: '#e2e8f0', fontWeight: 'bold' }}>
+                                    {quizIdx + 1} / {quizQs.length}
+                                </span>
+                            </div>
+                            <div className="quiz-prog-bar">
+                                <div className="quiz-prog-fill" style={{ width: `${((quizIdx + (chosen !== null ? 1 : 0)) / quizQs.length) * 100}%` }}></div>
+                            </div>
+                        </div>
+
+                        {/* 문제 영역 (스크롤) */}
+                        <div className="scrollable" style={{ padding: '16px 20px' }}>
+                            <span className={`tag ${currentQ.type === 'role' ? 'tag-role' : 'tag-concept'}`}>
+                                {currentQ.type === 'role' ? '코드 역할' : '개념'}
+                            </span>
+
+                            {currentQ.code && (
+                                <div className="code-block">{currentQ.code}</div>
+                            )}
+
+                            <p style={{ fontWeight: 700, fontSize: 16, lineHeight: 1.6, margin: '4px 0 16px', color: '#0f172a' }}>
+                                {currentQ.q}
+                            </p>
+
+                            {currentQ.opts.map((opt, i) => {
+                                let cls = 'quiz-opt';
+                                if (chosen !== null) {
+                                    if (i === currentQ.ans) cls += ' correct';
+                                    else if (i === chosen) cls += ' wrong';
+                                    else cls += ' dim';
+                                }
+                                return (
+                                    <button key={i} className={cls} onClick={() => handleAnswer(i)}>
+                                        <span style={{ marginRight: 10, fontWeight: 'bold', color: '#94a3b8' }}>
+                                            {['①','②','③','④'][i]}
+                                        </span>
+                                        {opt}
+                                    </button>
+                                );
+                            })}
+
+                            {chosen !== null && (
+                                <div>
+                                    <div style={{ fontWeight: 900, fontSize: 17, margin: '14px 0 8px', color: chosen === currentQ.ans ? '#16a34a' : '#dc2626' }}>
+                                        {chosen === currentQ.ans ? '✅ 정답!' : '❌ 오답 — 오답 노트에 저장됐어요'}
+                                    </div>
+                                    <div className="explain-box">{currentQ.exp}</div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 다음 버튼 */}
+                        {chosen !== null && (
+                            <button className="btn-action" style={{ flexShrink: 0, marginBottom: 20 }} onClick={nextQuestion}>
+                                {quizIdx < quizQs.length - 1 ? '다음 문제 →' : '결과 보기 →'}
+                            </button>
+                        )}
+                    </div>
+                )}
+
+                {/* ── QUIZ_RESULT ── */}
+                {view === 'QUIZ_RESULT' && (
+                    <div className="center-screen fade-in">
+                        <div className="result-circle">
+                            <div style={{ fontSize: 28, fontWeight: 900, color: 'var(--primary)', lineHeight: 1 }}>
+                                {quizQs.length - sessionWrong.length}
+                            </div>
+                            <div style={{ fontSize: 13, color: '#64748b' }}>/ {quizQs.length}</div>
+                        </div>
+
+                        <h2 style={{ margin: '0 0 6px', color: '#0f172a' }}>
+                            {sessionWrong.length === 0 ? '완벽해요! 🎉' : `${sessionWrong.length}개 틀렸어요`}
+                        </h2>
+                        <p style={{ color: '#64748b', marginBottom: 24, fontSize: 14 }}>
+                            {sessionWrong.length === 0
+                                ? '이 파일의 코드를 완벽하게 이해하고 있어요!'
+                                : '틀린 문제는 오답 노트에 자동 저장됐어요.'}
+                        </p>
+
+                        {wrongList.length > 0 && (
+                            <button className="btn-action" style={{ background: '#9f1239', marginBottom: 0 }}
+                                onClick={() => setView('WRONG_NOTES')}>
+                                📚 오답 노트 보기 ({wrongList.length}개)
+                            </button>
+                        )}
+                        <button className="btn-action"
+                            style={{ background: 'white', color: 'var(--primary)', border: '2px solid var(--primary)', marginTop: 0 }}
+                            onClick={() => startQuiz(quizMode)}>
+                            🔄 다시 풀기
+                        </button>
+                        <button className="btn-action"
+                            style={{ background: 'transparent', color: '#94a3b8', boxShadow: 'none', border: '1.5px solid #e2e8f0', marginTop: 0 }}
+                            onClick={() => setView('STUDY_HOME')}>
+                            메뉴로
+                        </button>
+                    </div>
+                )}
+
+                {/* ── WRONG_NOTES ── */}
+                {view === 'WRONG_NOTES' && (
+                    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                        {/* 헤더 */}
+                        <div style={{ padding: '24px 20px 16px', background: '#fff1f2', flexShrink: 0, borderBottom: '1.5px solid #fecdd3' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div>
+                                    <div style={{ fontSize: 12, color: '#be123c', fontWeight: 'bold' }}>WRONG NOTES</div>
+                                    <h3 style={{ margin: '4px 0 0', color: '#0f172a' }}>
+                                        📚 오답 노트
+                                        <span style={{ fontSize: 14, color: '#64748b', fontWeight: 400, marginLeft: 8 }}>
+                                            {wrongList.length}개
+                                        </span>
+                                    </h3>
+                                </div>
+                                {wrongList.length > 0 && (
+                                    <button onClick={() => { if (confirm('전체 삭제할까요?')) setWrongList([]); }}
+                                        style={{ background: 'none', border: '1px solid #fca5a5', color: '#dc2626', borderRadius: 8, padding: '6px 12px', fontSize: 13, cursor: 'pointer' }}>
+                                        전체 삭제
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* 목록 */}
+                        <div className="scrollable" style={{ padding: 16 }}>
+                            {wrongList.length === 0 ? (
+                                <div style={{ textAlign: 'center', padding: '60px 0', color: '#94a3b8' }}>
+                                    <div style={{ fontSize: 40, marginBottom: 12 }}>🎉</div>
+                                    <div style={{ fontWeight: 'bold', fontSize: 16 }}>오답이 없어요!</div>
+                                    <div style={{ fontSize: 14, marginTop: 6 }}>퀴즈를 풀면 틀린 문제가 여기 쌓여요.</div>
+                                </div>
+                            ) : (
+                                wrongList.map(w => {
+                                    const q = QUIZ_BANK.find(x => x.id === w.id);
+                                    if (!q) return null;
+                                    return (
+                                        <div key={w.id} className="wrong-card">
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                                                <span className={`tag ${q.type === 'role' ? 'tag-role' : 'tag-concept'}`}>
+                                                    {q.type === 'role' ? '코드 역할' : '개념'}
+                                                </span>
+                                                <button onClick={() => setWrongList(prev => prev.filter(x => x.id !== w.id))}
+                                                    style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: 18, cursor: 'pointer', padding: 0 }}>
+                                                    ✕
+                                                </button>
+                                            </div>
+
+                                            {q.code && (
+                                                <div className="code-block" style={{ fontSize: 12, marginBottom: 10 }}>{q.code}</div>
+                                            )}
+
+                                            <p style={{ fontWeight: 700, fontSize: 14, margin: '0 0 10px', lineHeight: 1.5 }}>{q.q}</p>
+
+                                            <div style={{ background: '#dcfce7', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#15803d' }}>
+                                                <span style={{ fontWeight: 'bold' }}>✅ 정답: </span>{q.opts[q.ans]}
+                                            </div>
+
+                                            <div style={{ background: '#f0f9ff', borderLeft: '3px solid #0ea5e9', borderRadius: '0 8px 8px 0', padding: '10px 14px', marginTop: 8, fontSize: 13, color: '#0c4a6e', lineHeight: 1.6 }}>
+                                                {q.exp}
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+
+                        {/* 하단 버튼 */}
+                        <div style={{ padding: '10px 20px 20px', flexShrink: 0 }}>
+                            {wrongList.length > 0 && (
+                                <button className="btn-action" style={{ marginBottom: 0, marginLeft: 0, marginRight: 0, width: '100%' }}
+                                    onClick={() => startQuiz('wrong')}>
+                                    🔄 오답만 다시 풀기
+                                </button>
+                            )}
+                            <button className="btn-action"
+                                style={{ background: 'transparent', color: '#94a3b8', boxShadow: 'none', border: '1.5px solid #e2e8f0', marginTop: 8, marginLeft: 0, marginRight: 0, width: '100%' }}
+                                onClick={() => setView('STUDY_HOME')}>
+                                ← 뒤로
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+            </div>
+        );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+</script>
+</body>
+</html>
